@@ -1,0 +1,10 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  # Deliberately off: the role must gather the facts it needs on its own.
+  gather_facts: false
+  tasks:
+    - name: "Install pass-cli (latest)"
+      ansible.builtin.include_role:
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"

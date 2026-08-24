@@ -1,0 +1,29 @@
+---
+
+# Version to install: "latest" resolves through the Proton manifest, or pin an
+# explicit version such as "2.3.2".
+passcli_version: "latest"
+
+# Name of the installed binary.
+passcli_binary_name: "pass-cli"
+
+# Absolute path the binary is installed to.
+passcli_binary_path: "/usr/local/bin/{{ passcli_binary_name }}"
+
+# Directory on the *managed host* used to stage the download before installing.
+passcli_tmp_directory: "/tmp"
+
+# Ownership and permissions of the installed binary.
+passcli_binary_owner: "root"
+passcli_binary_group: "root"
+passcli_binary_mode: "0755"
+
+# Proton release manifest, used to resolve "latest" and its SHA256 checksum.
+passcli_manifest_url: "https://proton.me/download/pass-cli/versions.json"
+
+# Base URL downloads are built from.
+passcli_download_base_url: "https://proton.me/download/pass-cli"
+
+# Retries applied to network operations (manifest fetch and binary download).
+passcli_download_retries: 3
+passcli_download_delay: 5

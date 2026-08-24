@@ -1,0 +1,25 @@
+---
+
+- name: Assert the target platform is supported
+  ansible.builtin.assert:
+    that:
+      - ansible_system == "Linux"
+      - ansible_architecture in passcli_arch_map
+    fail_msg: >-
+      pass-cli is only published for Linux on
+      {{ passcli_arch_map.keys() | list | join(', ') }};
+      got {{ ansible_system }}/{{ ansible_architecture }}.
+    success_msg: "Supported platform: {{ ansible_system }}/{{ ansible_architecture }}"
+    quiet: true
+
+- name: Assert passcli_version is usable
+  ansible.builtin.assert:
+    that:
+      - passcli_version is string
+      - passcli_version | length > 0
+      - passcli_version == "latest" or passcli_version is match('^[0-9]+\.[0-9]+\.[0-9]+')
+    fail_msg: >-
+      passcli_version must be "latest" or a semantic version such as "2.3.2";
+      got "{{ passcli_version }}".
+    success_msg: "Requested version: {{ passcli_version }}"
+    quiet: true

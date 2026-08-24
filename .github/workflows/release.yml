@@ -1,0 +1,57 @@
+---
+# This workflow requires a GALAXY_API_KEY secret present in the GitHub
+# repository or organization.
+#
+# See: https://github.com/marketplace/actions/publish-ansible-role-to-galaxy
+# See: https://github.com/ansible/galaxy/issues/46
+
+name: Release
+'on':
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      # Galaxy derives the role name from the checkout directory, hence the
+      # namespace.role path.
+      - name: Check out the codebase.
+        uses: actions/checkout@v4
+        with:
+          path: 'sgaunet.passcli'
+
+      - name: Set up Python 3.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible.
+        run: pip3 install ansible-core
+
+      - name: Trigger a new import on Galaxy.
+        env:
+          GALAXY_API_KEY: ${{ secrets.GALAXY_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          ansible-galaxy role import \
+            --api-key "$GALAXY_API_KEY" \
+            "${GITHUB_REPOSITORY%/*}" "${GITHUB_REPOSITORY#*/}"
+
+      - name: Create GitHub Release
+        working-directory: sgaunet.passcli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          tag: ${{ github.ref_name }}
+        run: |
+          gh release create "$tag" \
+            --repo="$GITHUB_REPOSITORY" \
+            --title="${GITHUB_REPOSITORY#*/} ${tag}" \
+            --generate-notes

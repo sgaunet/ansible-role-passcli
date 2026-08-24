@@ -1,0 +1,22 @@
+---
+- name: Prepare
+  hosts: all
+  become: true
+  tasks:
+    - name: "Seed an outdated pass-cli"
+      ansible.builtin.include_role:
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+      vars:
+        passcli_version: "{{ passcli_old_version }}"
+
+    - name: Confirm the outdated version is in place
+      ansible.builtin.command: "/usr/local/bin/pass-cli --version"
+      register: passcli_seeded
+      changed_when: false
+
+    - name: Assert the seeded version is the outdated one
+      ansible.builtin.assert:
+        that:
+          - passcli_old_version in passcli_seeded.stdout
+        fail_msg: "expected {{ passcli_old_version }}, got \"{{ passcli_seeded.stdout }}\""
+        success_msg: "seeded {{ passcli_seeded.stdout }}"

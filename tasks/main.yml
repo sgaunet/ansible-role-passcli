@@ -1,0 +1,67 @@
+---
+
+# The role keys off ansible_system/ansible_architecture, so it stays usable in
+# plays that run with gather_facts: false.
+- name: Gather the facts this role needs
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - "min"
+  when: ansible_system is not defined or ansible_architecture is not defined
+
+- name: Validate requested platform and version
+  ansible.builtin.include_tasks: assert.yml
+
+- name: Map architecture
+  ansible.builtin.set_fact:
+    passcli_arch: "{{ passcli_arch_map[ansible_architecture] }}"
+
+- name: Resolve version
+  ansible.builtin.include_tasks: resolve_version.yml
+
+- name: Check installed version
+  ansible.builtin.command: "{{ passcli_binary_path }} --version"
+  register: passcli_installed_version
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Install pass-cli
+  when: >-
+    passcli_installed_version.rc != 0
+    or passcli_installed_version.stdout is not search(
+      '(^|[^0-9.])' ~ (passcli_version_to_install | regex_escape) ~ '([^0-9.]|$)')
+  block:
+    - name: Create temporary directory
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: passcli
+        path: "{{ passcli_tmp_directory }}"
+      register: passcli_temp_dir
+
+    - name: Download pass-cli binary
+      ansible.builtin.get_url:
+        url: "{{ passcli_download_url }}"
+        dest: "{{ passcli_temp_dir.path }}/{{ passcli_binary_name }}"
+        checksum: "{{ passcli_checksum | default(omit) }}"
+        mode: "0755"
+      retries: "{{ passcli_download_retries }}"
+      delay: "{{ passcli_download_delay }}"
+      until: passcli_download is succeeded
+      register: passcli_download
+
+    - name: Install pass-cli binary
+      ansible.builtin.copy:
+        src: "{{ passcli_temp_dir.path }}/{{ passcli_binary_name }}"
+        dest: "{{ passcli_binary_path }}"
+        owner: "{{ passcli_binary_owner }}"
+        group: "{{ passcli_binary_group }}"
+        mode: "{{ passcli_binary_mode }}"
+        remote_src: true
+
+  always:
+    - name: Cleanup temporary directory
+      ansible.builtin.file:
+        path: "{{ passcli_temp_dir.path }}"
+        state: absent
+      when: passcli_temp_dir.path is defined

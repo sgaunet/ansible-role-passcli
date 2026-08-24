@@ -1,0 +1,21 @@
+---
+# Kept in sync with .ansible-lint: ansible-lint runs yamllint under the hood, so
+# both entry points (`task lint` and CI) report the same thing.
+extends: default
+
+ignore: |
+  .venv/
+
+rules:
+  line-length: disable
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false
+  comments:
+    min-spaces-from-content: 1
+  braces:
+    max-spaces-inside: 1
+  comments-indentation: false
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true

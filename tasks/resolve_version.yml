@@ -1,0 +1,30 @@
+---
+
+- name: Fetch Proton Pass CLI manifest
+  ansible.builtin.uri:
+    url: "{{ passcli_manifest_url }}"
+    return_content: true
+  register: passcli_manifest
+  retries: "{{ passcli_download_retries }}"
+  delay: "{{ passcli_download_delay }}"
+  until: passcli_manifest is succeeded
+  when: passcli_version == "latest"
+  check_mode: false
+
+- name: Set version and checksum from manifest (latest)
+  ansible.builtin.set_fact:
+    passcli_version_to_install: "{{ _passcli_manifest_linux.version }}"
+    passcli_checksum: "sha256:{{ _passcli_manifest_linux.urls.linux[passcli_arch].hash }}"
+  vars:
+    _passcli_manifest_linux: "{{ (passcli_manifest.content | from_json).passCliVersions }}"
+  when: passcli_version == "latest"
+
+- name: Set version (pinned)
+  ansible.builtin.set_fact:
+    passcli_version_to_install: "{{ passcli_version }}"
+  when: passcli_version != "latest"
+
+- name: Set download URL
+  ansible.builtin.set_fact:
+    passcli_download_url: >-
+      {{ passcli_download_base_url }}/{{ passcli_version_to_install }}/pass-cli-linux-{{ passcli_arch }}

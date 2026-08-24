@@ -1,0 +1,15 @@
+---
+# ansible-lint configuration - https://ansible.readthedocs.io/projects/lint/
+profile: production
+
+exclude_paths:
+  - .venv/
+  - .cache/
+  - .github/
+
+warn_list:
+  - yaml  # violations reported by yamllint, see .yamllint
+
+skip_list:
+  - "yaml[line-length]"
+  - "complexity[play]"

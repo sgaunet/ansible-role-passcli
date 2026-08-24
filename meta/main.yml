@@ -1,0 +1,35 @@
+---
+galaxy_info:
+  role_name: passcli
+  author: sgaunet
+  namespace: sgaunet
+  description: Install Proton Pass CLI (pass-cli)
+  company: ""
+  license: "MIT"
+  min_ansible_version: "2.15"
+  issue_tracker_url: https://github.com/sgaunet/ansible-role-passcli/issues
+  platforms:
+    - name: EL
+      versions:
+        - all
+    - name: Fedora
+      versions:
+        - all
+    - name: GenericLinux
+      versions:
+        - all
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+  galaxy_tags:
+    - proton
+    - pass
+    - cli
+    - password
+    - installer
+    - linux
+
+dependencies: []
