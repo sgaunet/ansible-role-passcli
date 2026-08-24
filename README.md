@@ -105,12 +105,18 @@ Run one scenario, or target another distribution:
 
 ```bash
 task test-pinned
-MOLECULE_DISTRO=rockylinux9 molecule test -s upgrade
+MOLECULE_DISTRO=ubuntu2204 molecule test -s upgrade
 ```
 
 `MOLECULE_DISTRO` selects the [geerlingguy](https://hub.docker.com/u/geerlingguy)
-Ansible test image (default `rockylinux9`); CI runs the matrix against
-`ubuntu2404` and `rockylinux9`.
+Ansible test image (default `ubuntu2404`), which is also what CI runs.
+
+Only Ubuntu is exercised. The EL images are not tested: `sudo` cannot complete
+PAM inside `geerlingguy/docker-rockylinux9-ansible`, so every play using
+`become: true` fails at fact gathering before any role task runs. That is a
+limitation of the test image, not of the role — but it does mean the EL and
+Fedora platforms listed in `meta/main.yml` are supported on inspection rather
+than by test.
 
 ## License
 

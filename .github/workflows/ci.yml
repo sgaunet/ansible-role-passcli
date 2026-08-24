@@ -46,7 +46,6 @@ jobs:
       matrix:
         distro:
           - ubuntu2404
-          - rockylinux9
         scenario:
           - default
           - pinned
