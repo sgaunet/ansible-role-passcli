@@ -1,0 +1,30 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  vars:
+    passcli_expected_path: "/usr/local/bin/pass-cli"
+  tasks:
+    - name: Run pass-cli --version
+      ansible.builtin.command: "{{ passcli_expected_path }} --version"
+      register: passcli_version_output
+      changed_when: false
+
+    - name: Fetch the Proton manifest to learn the current version
+      ansible.builtin.uri:
+        url: "https://proton.me/download/pass-cli/versions.json"
+        return_content: true
+      register: passcli_manifest
+
+    - name: Assert the outdated binary was replaced by the latest release
+      ansible.builtin.assert:
+        that:
+          - passcli_old_version not in passcli_version_output.stdout
+          - passcli_latest_version in passcli_version_output.stdout
+        fail_msg: >-
+          expected an upgrade from {{ passcli_old_version }} to
+          {{ passcli_latest_version }}, got "{{ passcli_version_output.stdout }}"
+        success_msg: >-
+          upgraded {{ passcli_old_version }} -> {{ passcli_version_output.stdout }}
+      vars:
+        passcli_latest_version: "{{ (passcli_manifest.content | from_json).passCliVersions.version }}"

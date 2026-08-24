@@ -1,0 +1,8 @@
+---
+
+# Maps ansible_architecture onto the architecture slug Proton publishes.
+passcli_arch_map:
+  x86_64: "x86_64"
+  amd64: "x86_64"
+  aarch64: "aarch64"
+  arm64: "aarch64"

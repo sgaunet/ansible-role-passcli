@@ -1,0 +1,42 @@
+[settings]
+# required so the postinstall hook below runs (populates the venv via uv)
+experimental = true
+
+[tools]
+python = "3.12"
+task = "3.40.0"
+uv = "latest"
+
+# mise creates and activates a project-local .venv (puts .venv/bin on PATH), so molecule,
+# ansible-playbook and the docker driver all resolve from one interpreter/venv.
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+# Populate the venv with the pinned Python toolchain via uv after `mise install`
+# (also runs under jdx/mise-action in CI, which calls `mise install`).
+[hooks]
+postinstall = "uv pip install -r requirements.txt"
+
+[tasks.lint]
+description = "Run yamllint + ansible-lint"
+run = ["yamllint .", "ansible-lint ."]
+
+[tasks.test]
+description = "Run every molecule scenario"
+run = [
+  "molecule test -s default",
+  "molecule test -s pinned",
+  "molecule test -s upgrade",
+]
+
+[tasks.test-default]
+description = "Run the 'default' molecule scenario (installs latest)"
+run = "molecule test -s default"
+
+[tasks.test-pinned]
+description = "Run the 'pinned' molecule scenario (installs a pinned version)"
+run = "molecule test -s pinned"
+
+[tasks.test-upgrade]
+description = "Run the 'upgrade' molecule scenario (old version -> latest)"
+run = "molecule test -s upgrade"

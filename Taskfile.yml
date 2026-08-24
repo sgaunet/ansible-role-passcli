@@ -1,0 +1,55 @@
+---
+# https://taskfile.dev
+version: '3'
+
+vars:
+  SCENARIOS: default pinned upgrade
+
+tasks:
+  default:
+    desc: "List tasks"
+    cmds:
+      - task -a
+
+  deps:
+    desc: "install the pinned python toolchain into .venv"
+    cmds:
+      - uv pip install -r requirements.txt
+
+  linter:
+    desc: "execute linter (yamllint + ansible-lint)"
+    cmds:
+      - yamllint .
+      - ansible-lint .
+
+  test:
+    desc: "run every molecule scenario"
+    cmds:
+      - for: { var: SCENARIOS }
+        cmd: molecule test -s {{ .ITEM }}
+
+  test-default:
+    desc: "run the 'default' molecule scenario (installs latest)"
+    cmds:
+      - molecule test -s default
+
+  test-pinned:
+    desc: "run the 'pinned' molecule scenario (installs a pinned version)"
+    cmds:
+      - molecule test -s pinned
+
+  test-upgrade:
+    desc: "run the 'upgrade' molecule scenario (old version -> latest)"
+    cmds:
+      - molecule test -s upgrade
+
+  converge:
+    desc: "converge the 'default' scenario and leave the container running"
+    cmds:
+      - molecule converge
+
+  destroy:
+    desc: "tear down every molecule container"
+    cmds:
+      - for: { var: SCENARIOS }
+        cmd: molecule destroy -s {{ .ITEM }}

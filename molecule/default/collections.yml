@@ -1,0 +1,8 @@
+---
+# Both are declared requirements of the molecule docker driver
+# (see `molecule --version`); a fresh runner has neither pre-installed.
+collections:
+  - name: community.docker
+    version: ">=3.10.0"
+  - name: ansible.posix
+    version: ">=1.4.0"

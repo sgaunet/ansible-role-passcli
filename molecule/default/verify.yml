@@ -1,0 +1,58 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  vars:
+    passcli_expected_path: "/usr/local/bin/pass-cli"
+  tasks:
+    - name: Stat pass-cli binary
+      ansible.builtin.stat:
+        path: "{{ passcli_expected_path }}"
+      register: passcli_present
+
+    - name: Check binary is present, owned by root and executable
+      ansible.builtin.assert:
+        that:
+          - passcli_present.stat.exists
+          - passcli_present.stat.isreg
+          - passcli_present.stat.pw_name == "root"
+          - passcli_present.stat.mode == "0755"
+        fail_msg: "pass-cli is not installed correctly: {{ passcli_present.stat }}"
+        success_msg: "pass-cli is installed at {{ passcli_expected_path }}"
+
+    - name: Run pass-cli --version
+      ansible.builtin.command: "{{ passcli_expected_path }} --version"
+      register: passcli_version_output
+      changed_when: false
+
+    - name: Fetch the Proton manifest to learn the current version
+      ansible.builtin.uri:
+        url: "https://proton.me/download/pass-cli/versions.json"
+        return_content: true
+      register: passcli_manifest
+
+    - name: Assert the installed binary reports the latest published version
+      ansible.builtin.assert:
+        that:
+          - passcli_version_output.stdout | length > 0
+          - passcli_latest_version in passcli_version_output.stdout
+        fail_msg: >-
+          expected version {{ passcli_latest_version }},
+          got "{{ passcli_version_output.stdout }}"
+        success_msg: "pass-cli reports {{ passcli_version_output.stdout }}"
+      vars:
+        passcli_latest_version: "{{ (passcli_manifest.content | from_json).passCliVersions.version }}"
+
+    - name: Assert no staging directory was left behind
+      ansible.builtin.find:
+        paths: "/tmp"
+        patterns: "passcli*"
+        file_type: directory
+      register: passcli_leftovers
+
+    - name: Check the temporary directory was cleaned up
+      ansible.builtin.assert:
+        that:
+          - passcli_leftovers.matched == 0
+        fail_msg: "leftover staging directories: {{ passcli_leftovers.files | map(attribute='path') | list }}"
+        success_msg: "no staging directory left behind"

@@ -1,0 +1,68 @@
+---
+name: CI
+'on':
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PY_COLORS: '1'
+  ANSIBLE_FORCE_COLOR: '1'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the codebase.
+        uses: actions/checkout@v4
+
+      # `mise install` runs the postinstall hook in mise.toml, which populates
+      # .venv from requirements.txt.
+      - name: Set up mise (python, uv, task).
+        uses: jdx/mise-action@v2
+        with:
+          experimental: true
+
+      - name: Run yamllint.
+        run: mise exec -- yamllint .
+
+      - name: Run ansible-lint.
+        run: mise exec -- ansible-lint .
+
+  molecule:
+    name: Molecule (${{ matrix.scenario }} / ${{ matrix.distro }})
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - ubuntu2404
+          - rockylinux9
+        scenario:
+          - default
+          - pinned
+          - upgrade
+
+    steps:
+      - name: Check out the codebase.
+        uses: actions/checkout@v4
+
+      - name: Set up mise (python, uv, task).
+        uses: jdx/mise-action@v2
+        with:
+          experimental: true
+
+      - name: Run Molecule tests.
+        run: mise exec -- molecule test -s "${MOLECULE_SCENARIO}"
+        env:
+          MOLECULE_DISTRO: ${{ matrix.distro }}
+          MOLECULE_SCENARIO: ${{ matrix.scenario }}

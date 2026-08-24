@@ -1,0 +1,13 @@
+ansible-core==2.17.6
+ansible-compat==24.9.1
+molecule==24.12.0
+# NOTE: the `[docker]` extra is deliberately NOT used. It pulls in the `selinux`
+# shim package, which shells out to `/usr/bin/python<X.Y>` and hard-fails whenever
+# the venv interpreter (e.g. from mise) differs from the system one. The docker
+# driver only needs `docker` + `requests`, both pinned explicitly below.
+molecule-plugins==23.5.3
+docker==7.1.0
+requests==2.32.3
+jmespath==1.0.1
+ansible-lint==24.9.2
+yamllint==1.35.1
